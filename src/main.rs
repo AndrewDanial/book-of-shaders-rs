@@ -3,7 +3,7 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
     sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle},
-    window::WindowResized,
+    window::{WindowResized, WindowResolution},
 };
 
 #[derive(Component)]
@@ -12,7 +12,13 @@ struct Canvas;
 fn main() {
     App::new()
         .add_plugins((
-            DefaultPlugins,
+            DefaultPlugins.set(WindowPlugin {
+                primary_window: Some(Window {
+                    resolution: WindowResolution::new(800.0, 800.0),
+                    ..default()
+                }),
+                ..default()
+            }),
             Material2dPlugin::<CustomMaterial>::default(),
         ))
         .add_systems(Startup, setup)
@@ -33,11 +39,13 @@ fn setup(
     commands.spawn(Camera2dBundle::default());
     let width = window.resolution.width();
     let height = window.resolution.height();
+    info!("{} {}", width, height);
     // quad
     commands.spawn((
         MaterialMesh2dBundle {
             mesh: meshes.add(Rectangle::new(1., 1.)).into(),
-            transform: Transform::default().with_scale(Vec3::new(width, height, 1.)),
+            transform: Transform::from_translation(Vec3::new(0., 0., 1.0))
+                .with_scale(Vec3::new(width, height, 1.)),
             material: materials.add(CustomMaterial {
                 color: Color::BLUE,
                 resolution: Vec2::new(width, height),
@@ -71,9 +79,16 @@ fn on_resize_system(
     mut q: Query<&mut Transform, With<Canvas>>,
     window: Query<&Window>,
 ) {
+    let window = window.single();
     for _ in resize_reader.read() {
         let mut transform = q.single_mut();
-        let window = window.single();
         transform.scale = Vec3::new(window.resolution.width(), window.resolution.height(), 1.);
+        info!(
+            "{} {}",
+            window.resolution.width(),
+            window.resolution.height()
+        );
     }
+
+    
 }
